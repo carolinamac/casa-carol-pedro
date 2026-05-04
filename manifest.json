@@ -2,20 +2,21 @@
   "name": "Casa Carol & Pedro",
   "short_name": "Casa",
   "description": "Tarefas diárias da casa",
-  "start_url": "/",
+  "start_url": "/casa-carol-pedro/",
+  "scope": "/casa-carol-pedro/",
   "display": "standalone",
   "background_color": "#2D4A3E",
   "theme_color": "#2D4A3E",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/casa-carol-pedro/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/casa-carol-pedro/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
