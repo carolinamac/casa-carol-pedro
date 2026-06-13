@@ -186,10 +186,11 @@ function pCnt(skip){
   Object.keys(S.dd).forEach(d=>{ if(d!==skip && S.dd[d]) c[S.dd[d].p.p]=(c[S.dd[d].p.p]||0)+1; });
   return c;
 }
-function pickP(skip, ex){
+function pickP(skip, ex, used){
   const pc = pCnt(skip);
-  const pool = AP.filter(p=>p.id!==ex && (pc[p.p]||0)<2);
-  return rnd(pool.length?pool:AP.filter(p=>p.id!==ex));
+  used = used || [];
+  const pool = AP.filter(p=>p.id!==ex && !used.includes(p.id) && (pc[p.p]||0)<2);
+  return rnd(pool.length?pool:AP.filter(p=>p.id!==ex && !used.includes(p.id))) || rnd(AP.filter(p=>p.id!==ex));
 }
 function pickA(h, ex){
   const list = (CAT.harm_acomp[h]||CAT.harm_acomp.universal||[]).filter(i=>AA[i]&&i!==ex);
@@ -208,9 +209,11 @@ function gerar(){
   if(pi > pf){ alert('A data de in\u00edcio deve ser anterior \u00e0 data de fim.'); return; }
   S.pi = pi; S.pf = pf; S.fds = fds;
   S.dd = {};
+  const used = [];
   buildDates(pi,pf,fds).forEach(d=>{
-    const p = pickP(d, null);
+    const p = pickP(d, null, used);
     if(!p) return;
+    used.push(p.id);
     S.dd[d] = {p, acomp:[pickA(p.h,null)].filter(Boolean), salad:[pickS(p.h,null)].filter(Boolean)};
   });
   const lp=[...AL]; lp.sort(()=>Math.random()-.5); S.ln = lp.slice(0,2);
