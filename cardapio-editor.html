@@ -1,0 +1,363 @@
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editor de Card&#xE1;pio &#x2014; Lar Doce Lar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f5f5f2;color:#1a1a1a;padding:1rem;font-size:14px}
+.wrap{max-width:640px;margin:0 auto}
+h1{font-size:18px;font-weight:700;margin-bottom:3px}
+.sub{font-size:12px;color:#6b7280;margin-bottom:1rem;padding-bottom:10px;border-bottom:1px solid #e5e5e0}
+
+/* setup */
+.setup{background:#fff;border:1px solid #e5e5e0;border-radius:10px;padding:14px;margin-bottom:14px}
+.setup-row{display:flex;gap:10px;margin-bottom:10px;align-items:flex-end;flex-wrap:wrap}
+.field{flex:1;min-width:120px}
+.field label{display:block;font-size:11px;color:#6b7280;margin-bottom:4px}
+.field input[type=date]{width:100%;padding:9px 10px;font-size:14px;border:1.5px solid #d1d5db;border-radius:8px;font-family:inherit;background:#fff;color:#1a1a1a}
+.field input[type=date]:focus{outline:none;border-color:#1a1a1a}
+.checkfield{display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;padding-bottom:9px}
+.checkfield input{width:16px;height:16px}
+.btn-gerar{width:100%;padding:11px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+.btn-gerar:hover{opacity:.85}
+.btn-gerar:disabled{opacity:.4;cursor:default}
+
+/* loading / status */
+.loading,.error{text-align:center;padding:2rem 1rem;color:#6b7280;font-size:13px}
+.error{color:#b91c1c}
+
+/* snacks */
+.snacks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.snack{background:#e8edf2;border-radius:8px;padding:9px 11px}
+.snack-lbl{font-size:11px;color:#6b7280;margin-bottom:3px}
+.snack-row{display:flex;align-items:center;gap:6px}
+.snack-n{font-size:13px;flex:1}
+
+/* day cards */
+.day{background:#dbeafe;color:#1a3050;border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.day.weekend{background:#fce7f3;color:#6b1237}
+.day-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.day-dt{font-weight:600;font-size:14px}
+.day-dt span{font-weight:400;font-size:12px;opacity:.65;margin-left:4px}
+.row{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:0.5px solid rgba(30,58,80,.15)}
+.day.weekend .row{border-bottom-color:rgba(107,18,55,.15)}
+.row.last{border-bottom:none}
+.lbl{font-size:11px;opacity:.65;min-width:50px;flex-shrink:0;padding-top:4px}
+.items{display:flex;flex-wrap:wrap;gap:5px;flex:1;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.6);border-radius:4px;padding:3px 4px 3px 8px;font-size:12px}
+.chip.prot{font-weight:600;background:rgba(255,255,255,.8);padding:3px 8px}
+.chip-btn{font-size:10px;border:none;background:none;cursor:pointer;opacity:.5;color:inherit;padding:0 2px;line-height:1}
+.chip-btn:hover{opacity:1}
+.btn-add{font-size:11px;padding:3px 7px;border:1px dashed rgba(30,58,80,.3);border-radius:4px;background:transparent;color:inherit;cursor:pointer;opacity:.65}
+.day.weekend .btn-add{border-color:rgba(107,18,55,.3)}
+.btn-add:hover{opacity:1;background:rgba(255,255,255,.3)}
+.btn-t{font-size:11px;padding:3px 8px;border:1px solid rgba(30,58,80,.25);border-radius:4px;background:rgba(255,255,255,.55);color:inherit;cursor:pointer}
+.day.weekend .btn-t{border-color:rgba(107,18,55,.25)}
+.btn-t:hover{background:rgba(255,255,255,.9)}
+.btn-rm{font-size:11px;border:none;background:none;opacity:.4;cursor:pointer;color:inherit}
+.btn-rm:hover{opacity:.9}
+
+/* actions */
+.actions{display:flex;gap:8px;margin-top:14px}
+.btn-save{flex:1;padding:12px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer}
+.btn-save:hover{opacity:.85}
+.btn-regen{padding:12px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#6b7280}
+.status{display:none;margin-top:8px;padding:10px;background:#eef2f5;border-radius:8px;font-size:12px;color:#374151}
+.status.on{display:block}
+.status textarea{width:100%;height:68px;font-family:monospace;font-size:10px;margin-top:6px;padding:4px;border:1px solid #d1d5db;border-radius:4px;background:#fff;resize:vertical}
+
+/* modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;padding:50px 16px 16px}
+.overlay.on{display:block}
+.modal{background:#fff;border-radius:12px;max-width:360px;margin:0 auto;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.modal-hd{padding:12px 14px;border-bottom:1px solid #f0f0ee;display:flex;justify-content:space-between;align-items:center}
+.modal-hd span{font-size:13px;font-weight:600}
+.modal-hd button{font-size:12px;border:none;background:none;cursor:pointer;color:#6b7280;padding:2px 6px}
+.modal-hd button:hover{color:#1a1a1a}
+.modal-search{padding:10px 12px;border-bottom:1px solid #f0f0ee}
+.modal-search input{width:100%;padding:8px 10px;font-size:13px;border:1.5px solid #d1d5db;border-radius:8px;outline:none;font-family:inherit}
+.modal-search input:focus{border-color:#1a1a1a}
+.mlist{max-height:220px;overflow-y:auto}
+.mitem{padding:10px 14px;font-size:13px;cursor:pointer;border-top:0.5px solid #f5f5f2;display:flex;justify-content:space-between;align-items:center}
+.mitem:hover,.mitem.hi{background:#f0f4ff}
+.cat{font-size:11px;color:#9ca3af;flex-shrink:0;margin-left:6px}
+
+#editor{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>&#x1F37D;&#xFE0F; Editor de Card&#xE1;pio</h1>
+  <p class="sub">Escolha o per&#xED;odo, gere os dias, ajuste e copie o JSON para o chat</p>
+
+  <div class="setup">
+    <div class="setup-row">
+      <div class="field">
+        <label for="data-inicio">Data de in&#xED;cio</label>
+        <input type="date" id="data-inicio">
+      </div>
+      <div class="field">
+        <label for="data-fim">Data de fim</label>
+        <input type="date" id="data-fim">
+      </div>
+    </div>
+    <div class="setup-row">
+      <label class="checkfield"><input type="checkbox" id="inclui-fds"> Incluir fim de semana</label>
+    </div>
+    <button class="btn-gerar" id="btn-gerar" disabled>Carregando cat&#xE1;logo...</button>
+  </div>
+
+  <div id="editor"></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-hd"><span id="mtitle">Escolher</span><button onclick="closeModal()">fechar &times;</button></div>
+    <div class="modal-search"><input type="search" id="minput" placeholder="Digitar para buscar..." autocomplete="off"></div>
+    <div class="mlist" id="mlist"></div>
+  </div>
+</div>
+
+<script>
+let CAT = null;
+let S = {pi:null, pf:null, fds:false, ln:[], dd:{}};
+let PC = null;
+
+const DOW = ["Domingo","Segunda","Ter\u00e7a","Quarta","Quinta","Sexta","S\u00e1bado"];
+const fmt = d => d.slice(8,10)+"/"+d.slice(5,7);
+const dow = d => DOW[new Date(d+"T12:00:00").getDay()];
+const isWE = d => { const w = new Date(d+"T12:00:00").getDay(); return w===0||w===6; };
+const rnd = a => a.length ? a[Math.floor(Math.random()*a.length)] : null;
+const esc = s => String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+
+let AA={}, ASa={}, AP=[], AL=[];
+
+fetch('./catalog.json')
+  .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(c => {
+    CAT = c;
+    (c.acomp||[]).forEach(r=>AA[r.id]=r.n);
+    (c.molho||[]).forEach(r=>AA[r.id]=r.n);
+    (c.salad||[]).forEach(r=>ASa[r.id]=r.n);
+    AP = (c.prot||[]).filter((r,i,a)=>r.t!=='e' && a.findIndex(x=>x.id===r.id)===i);
+    AL = c.lanche||[];
+    const btn = document.getElementById('btn-gerar');
+    btn.disabled = false;
+    btn.textContent = 'Gerar card\u00e1pio';
+    setDefaultDates();
+  })
+  .catch(err => {
+    const btn = document.getElementById('btn-gerar');
+    btn.textContent = 'Erro ao carregar cat\u00e1logo';
+    document.querySelector('.setup').insertAdjacentHTML('beforeend',
+      '<p class="error" style="margin-top:8px">N\u00e3o foi poss\u00edvel carregar catalog.json: '+esc(err.message)+'</p>');
+  });
+
+function setDefaultDates(){
+  // sugere a pr\u00f3xima segunda-feira como in\u00edcio e a sexta da mesma semana como fim
+  const today = new Date();
+  const day = today.getDay();
+  const diffToMon = (day===0) ? 1 : (day===1 ? 7 : (8-day));
+  const start = new Date(today); start.setDate(today.getDate()+diffToMon);
+  const end = new Date(start); end.setDate(start.getDate()+4);
+  document.getElementById('data-inicio').value = start.toISOString().slice(0,10);
+  document.getElementById('data-fim').value = end.toISOString().slice(0,10);
+}
+
+document.getElementById('btn-gerar').addEventListener('click', gerar);
+
+function buildDates(pi, pf, fds){
+  const out=[];
+  let d = new Date(pi+"T12:00:00");
+  const e = new Date(pf+"T12:00:00");
+  while(d<=e){
+    const w = d.getDay();
+    if(fds || (w!==0 && w!==6)) out.push(d.toISOString().slice(0,10));
+    d.setDate(d.getDate()+1);
+  }
+  return out;
+}
+
+function pCnt(skip){
+  const c={};
+  Object.keys(S.dd).forEach(d=>{ if(d!==skip && S.dd[d]) c[S.dd[d].p.p]=(c[S.dd[d].p.p]||0)+1; });
+  return c;
+}
+function pickP(skip, ex){
+  const pc = pCnt(skip);
+  const pool = AP.filter(p=>p.id!==ex && (pc[p.p]||0)<2);
+  return rnd(pool.length?pool:AP.filter(p=>p.id!==ex));
+}
+function pickA(h, ex){
+  const list = (CAT.harm_acomp[h]||CAT.harm_acomp.universal||[]).filter(i=>AA[i]&&i!==ex);
+  return rnd(list) || rnd((CAT.harm_acomp[h]||CAT.harm_acomp.universal||[]).filter(i=>AA[i]));
+}
+function pickS(h, ex){
+  const list = (CAT.harm_salad[h]||CAT.harm_salad.universal||[]).filter(i=>ASa[i]&&i!==ex);
+  return rnd(list) || rnd((CAT.harm_salad[h]||CAT.harm_salad.universal||[]).filter(i=>ASa[i]));
+}
+
+function gerar(){
+  const pi = document.getElementById('data-inicio').value;
+  const pf = document.getElementById('data-fim').value;
+  const fds = document.getElementById('inclui-fds').checked;
+  if(!pi || !pf){ alert('Selecione as duas datas.'); return; }
+  if(pi > pf){ alert('A data de in\u00edcio deve ser anterior \u00e0 data de fim.'); return; }
+  S.pi = pi; S.pf = pf; S.fds = fds;
+  S.dd = {};
+  buildDates(pi,pf,fds).forEach(d=>{
+    const p = pickP(d, null);
+    if(!p) return;
+    S.dd[d] = {p, acomp:[pickA(p.h,null)].filter(Boolean), salad:[pickS(p.h,null)].filter(Boolean)};
+  });
+  const lp=[...AL]; lp.sort(()=>Math.random()-.5); S.ln = lp.slice(0,2);
+  document.getElementById('editor').style.display = 'block';
+  render();
+  document.getElementById('editor').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ---- Modal ----
+function getPool(){
+  if(!PC) return [];
+  if(PC.type==="prot") return AP.map(p=>({id:p.id, n:p.n, cat:p.p}));
+  if(PC.type==="ac")   return Object.entries(AA).map(([id,n])=>({id,n}));
+  if(PC.type==="sl")   return Object.entries(ASa).map(([id,n])=>({id,n}));
+  if(PC.type==="lanche") return AL.map(l=>({id:l.id, n:l.n}));
+  return [];
+}
+function buildList(q){
+  const items = getPool();
+  const nq = norm(q||"");
+  const f = nq ? items.filter(r=>norm(r.n).includes(nq)) : items;
+  document.getElementById("mlist").innerHTML = f.slice(0,30).map(r=>
+    `<div class="mitem" data-id="${r.id}">${esc(r.n)}${r.cat?` <span class="cat">${esc(r.cat)}</span>`:""}</div>`
+  ).join("");
+  document.querySelectorAll(".mitem").forEach(el=>el.addEventListener("click",()=>pick(el.dataset.id)));
+}
+function openModal(type, date, idx, mode){
+  PC = {type, date, idx, mode: mode||"replace"};
+  const t = {prot:"Escolher prato", ac:"Escolher acompanhamento", sl:"Escolher salada", lanche:"Escolher lanche"};
+  document.getElementById("mtitle").textContent = t[type]||"Escolher";
+  document.getElementById("minput").value = "";
+  document.getElementById("overlay").classList.add("on");
+  buildList("");
+  setTimeout(()=>document.getElementById("minput").focus(), 60);
+}
+function closeModal(){ document.getElementById("overlay").classList.remove("on"); PC=null; }
+function pick(id){
+  if(!PC) return;
+  const {type, date, idx, mode} = PC;
+  if(type==="prot"){
+    const p = AP.find(x=>x.id===id);
+    if(p){ S.dd[date].p=p; S.dd[date].acomp=[pickA(p.h,null)].filter(Boolean); S.dd[date].salad=[pickS(p.h,null)].filter(Boolean); }
+  } else if(type==="ac"){
+    if(mode==="add") S.dd[date].acomp.push(id);
+    else S.dd[date].acomp[idx]=id;
+  } else if(type==="sl"){
+    if(mode==="add") S.dd[date].salad.push(id);
+    else S.dd[date].salad[idx]=id;
+  } else if(type==="lanche"){
+    const l = AL.find(x=>x.id===id);
+    if(l) S.ln[idx]=l;
+  }
+  closeModal(); render();
+}
+document.getElementById("minput").addEventListener("input", e=>buildList(e.target.value));
+document.getElementById("minput").addEventListener("keydown", e=>{
+  const items=[...document.querySelectorAll(".mitem")];
+  const hi=document.querySelector(".mitem.hi");
+  const ci = hi?items.indexOf(hi):-1;
+  if(e.key==="ArrowDown"){ e.preventDefault(); if(hi)hi.classList.remove("hi"); const n=items[ci+1]||items[0]; if(n){n.classList.add("hi"); n.scrollIntoView({block:"nearest"});} }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); if(hi)hi.classList.remove("hi"); const n=items[ci-1]||items[items.length-1]; if(n){n.classList.add("hi"); n.scrollIntoView({block:"nearest"});} }
+  else if(e.key==="Enter"){ e.preventDefault(); const sel=document.querySelector(".mitem.hi")||items[0]; if(sel) pick(sel.dataset.id); }
+  else if(e.key==="Escape") closeModal();
+});
+document.getElementById("overlay").addEventListener("click", e=>{ if(e.target===document.getElementById("overlay")) closeModal(); });
+
+// ---- Render ----
+function chips(date, type, arr, lookup){
+  let h="";
+  arr.forEach((id,i)=>{
+    const nm = lookup[id]||id;
+    h += `<span class="chip">${esc(nm)}`;
+    h += ` <button class="chip-btn" onclick="replaceItem('${date}','${type}',${i})" title="trocar">trocar</button>`;
+    h += ` <button class="chip-btn" onclick="removeItem('${date}','${type}',${i})" title="remover">&times;</button>`;
+    h += `</span>`;
+  });
+  h += `<button class="btn-add" onclick="openModal('${type}','${date}',null,'add')">+ adicionar</button>`;
+  return h;
+}
+
+function render(){
+  let h = "";
+  // lanches
+  h += '<div class="snacks">';
+  S.ln.forEach((l,i)=>{
+    h += `<div class="snack"><div class="snack-lbl">lanche ${i+1}</div>
+      <div class="snack-row"><span class="snack-n">${esc(l.n)}</span>
+      <button class="btn-t" onclick="openModal('lanche',null,${i},'replace')">trocar</button></div></div>`;
+  });
+  h += "</div>";
+  // dias
+  Object.keys(S.dd).sort().forEach(d=>{
+    const x = S.dd[d]; if(!x) return;
+    const weCls = isWE(d) ? " weekend" : "";
+    h += `<div class="day${weCls}">
+      <div class="day-hd">
+        <span class="day-dt">${fmt(d)} <span>${dow(d)}</span></span>
+        <button class="btn-rm" onclick="delDay('${d}')">remover dia</button>
+      </div>
+      <div class="row">
+        <span class="lbl">prato</span>
+        <div class="items"><span class="chip prot">${esc(x.p.n)}</span>
+        <button class="btn-t" onclick="openModal('prot','${d}',null,'replace')">trocar</button></div>
+      </div>
+      <div class="row">
+        <span class="lbl">acomp.</span>
+        <div class="items">${chips(d,'ac',x.acomp,AA)}</div>
+      </div>
+      <div class="row last">
+        <span class="lbl">salada</span>
+        <div class="items">${chips(d,'sl',x.salad,ASa)}</div>
+      </div>
+    </div>`;
+  });
+  h += `<div class="actions">
+    <button class="btn-save" onclick="copiar()">Copiar JSON para o chat</button>
+    <button class="btn-regen" onclick="gerar()">Regerar tudo</button>
+  </div>
+  <div class="status" id="st"></div>`;
+  document.getElementById("editor").innerHTML = h;
+}
+
+function replaceItem(date,type,idx){ openModal(type,date,idx,'replace'); }
+function removeItem(date,type,idx){
+  if(type==="ac") S.dd[date].acomp.splice(idx,1);
+  else if(type==="sl") S.dd[date].salad.splice(idx,1);
+  render();
+}
+function delDay(d){ delete S.dd[d]; render(); }
+
+function copiar(){
+  const days = Object.keys(S.dd);
+  if(!days.length){ alert('Nenhum dia no card\u00e1pio.'); return; }
+  const out = {gerado_em: new Date().toISOString().slice(0,10), periodo_inicio: S.pi, periodo_fim: S.pf, formato: S.fds?"semana_completa":"periodo_customizado", lanches: S.ln.map(l=>({n:l.n,id:l.id})), dias:{}};
+  days.sort().forEach(d=>{
+    const x = S.dd[d];
+    out.dias[d] = {dia_semana: dow(d), data: d, proteina:{n:x.p.n, id:x.p.id, t:x.p.t},
+      acompanhamentos: x.acomp.map(id=>({n:AA[id], id})),
+      saladas: x.salad.map(id=>({n:ASa[id], id}))};
+  });
+  const msg = "CARDAPIO_SALVAR_FASE2:"+JSON.stringify(out);
+  const st = document.getElementById("st");
+  const fb = ()=>{ st.className="status on"; st.innerHTML="Copie e cole no chat:<br><textarea readonly>"+esc(msg)+"</textarea>"; st.querySelector("textarea").select(); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(msg).then(()=>{ st.className="status on"; st.innerHTML="<strong>Copiado!</strong> Cole no chat.<br><textarea readonly>"+esc(msg)+"</textarea>"; }).catch(fb);
+  } else fb();
+}
+</script>
+</body>
+</html>
