@@ -359,7 +359,7 @@ function copiar(){
       acompanhamentos: x.acomp.map(id=>({n:AA[id], id})),
       saladas: x.salad.map(id=>({n:ASa[id], id}))};
   });
-  const msg = "CARDAPIO_SALVAR_FASE2:"+JSON.stringify(out);
+  const msg = "https://app.notion.com/p/36a663191819817c9eeecb66c16f1aa1\nCARDAPIO_SALVAR_FASE2:"+JSON.stringify(out);
   const st = document.getElementById("st");
   const fb = ()=>{ st.className="status on"; st.innerHTML="Copie e cole no chat:<br><textarea readonly>"+esc(msg)+"</textarea>"; st.querySelector("textarea").select(); };
   if(navigator.clipboard && navigator.clipboard.writeText){
