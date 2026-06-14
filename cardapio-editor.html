@@ -142,7 +142,7 @@ fetch('./catalog.json')
     (c.acomp||[]).forEach(r=>AA[r.id]=r.n);
     (c.molho||[]).forEach(r=>AA[r.id]=r.n);
     (c.salad||[]).forEach(r=>ASa[r.id]=r.n);
-    AP = (c.prot||[]).filter((r,i,a)=>r.t!=='e' && a.findIndex(x=>x.id===r.id)===i);
+    AP = (c.prot||[]).filter((r,i,a)=>a.findIndex(x=>x.id===r.id)===i);
     AL = c.lanche||[];
     const btn = document.getElementById('btn-gerar');
     btn.disabled = false;
@@ -186,11 +186,16 @@ function pCnt(skip){
   Object.keys(S.dd).forEach(d=>{ if(d!==skip && S.dd[d]) c[S.dd[d].p.p]=(c[S.dd[d].p.p]||0)+1; });
   return c;
 }
+function eligibleP(date){
+  const we = date ? isWE(date) : false;
+  return AP.filter(p => p.t!=='e' || we);
+}
 function pickP(skip, ex, used){
   const pc = pCnt(skip);
   used = used || [];
-  const pool = AP.filter(p=>p.id!==ex && !used.includes(p.id) && (pc[p.p]||0)<2);
-  return rnd(pool.length?pool:AP.filter(p=>p.id!==ex && !used.includes(p.id))) || rnd(AP.filter(p=>p.id!==ex));
+  const elig = eligibleP(skip);
+  const pool = elig.filter(p=>p.id!==ex && !used.includes(p.id) && (pc[p.p]||0)<2);
+  return rnd(pool.length?pool:elig.filter(p=>p.id!==ex && !used.includes(p.id))) || rnd(elig.filter(p=>p.id!==ex)) || rnd(elig);
 }
 function pickA(h, ex){
   const list = (CAT.harm_acomp[h]||CAT.harm_acomp.universal||[]).filter(i=>AA[i]&&i!==ex);
@@ -225,7 +230,7 @@ function gerar(){
 // ---- Modal ----
 function getPool(){
   if(!PC) return [];
-  if(PC.type==="prot") return AP.map(p=>({id:p.id, n:p.n, cat:p.p}));
+  if(PC.type==="prot") return eligibleP(PC.date).map(p=>({id:p.id, n:p.n, cat:p.p}));
   if(PC.type==="ac")   return Object.entries(AA).map(([id,n])=>({id,n}));
   if(PC.type==="sl")   return Object.entries(ASa).map(([id,n])=>({id,n}));
   if(PC.type==="lanche") return AL.map(l=>({id:l.id, n:l.n}));
